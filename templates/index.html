@@ -1,0 +1,880 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>BloodChain AI – Predictive Blood Supply Management System</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="/static/css/styles.css">
+    <style>
+        /* Mobile Device Frame Simulation Styles */
+        .mobile-device-frame {
+            max-width: 414px !important;
+            margin: 20px auto !important;
+            border-radius: 44px !important;
+            border: 12px solid #1e293b !important;
+            box-shadow: 0 25px 60px -15px rgba(0, 0, 0, 0.4) !important;
+            overflow: hidden !important;
+            position: relative;
+            background: #f4f7fb;
+            min-height: 840px !important;
+        }
+        .mobile-device-frame::before {
+            content: '';
+            position: absolute;
+            top: 6px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 120px;
+            height: 18px;
+            background: #1e293b;
+            border-radius: 10px;
+            z-index: 50;
+        }
+    </style>
+</head>
+<body class="bg-[#f4f7fb] text-slate-800 font-sans antialiased min-h-screen">
+
+    <!-- TOP FLOATING DEVICE VIEW TOGGLE (For Demo Presentations) -->
+    <div class="bg-[#091733] text-white py-1.5 px-4 text-xs flex items-center justify-between border-b border-slate-800 z-50 sticky top-0">
+        <div class="flex items-center space-x-2">
+            <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+            <span class="font-bold tracking-tight">BloodChain AI Localhost</span>
+            <span class="hidden sm:inline text-slate-400">| Hackwell 2.0 (Team Outliers #H2O080)</span>
+        </div>
+
+        <div class="flex items-center space-x-2">
+            <!-- View Mode Switcher -->
+            <div class="bg-[#0d2149] p-0.5 rounded-lg border border-slate-700 flex items-center space-x-1">
+                <button id="btnViewDesktop" class="px-2.5 py-1 rounded-md text-[11px] font-bold bg-blue-600 text-white flex items-center space-x-1 transition">
+                    <i data-lucide="monitor" class="w-3 h-3"></i>
+                    <span>Desktop View</span>
+                </button>
+                <button id="btnViewMobile" class="px-2.5 py-1 rounded-md text-[11px] font-medium text-slate-300 hover:text-white flex items-center space-x-1 transition">
+                    <i data-lucide="smartphone" class="w-3 h-3"></i>
+                    <span>Mobile Simulator</span>
+                </button>
+            </div>
+
+            <!-- Mobile Wi-Fi Connect Button -->
+            <button id="btnShowMobileURL" class="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-[11px] font-semibold border border-slate-700 flex items-center space-x-1 transition" title="Open on Real Phone">
+                <i data-lucide="qr-code" class="w-3 h-3"></i>
+                <span class="hidden sm:inline">Phone Connect</span>
+            </button>
+        </div>
+    </div>
+
+    <!-- MAIN WRAPPER (Can toggle .mobile-device-frame class) -->
+    <div id="deviceContainer" class="w-full transition-all duration-300">
+
+        <!-- ======================================================== -->
+        <!-- SCREEN 1: LOGIN VIEW                                     -->
+        <!-- ======================================================== -->
+        <div id="viewLogin" class="min-h-[calc(100vh-36px)] flex items-center justify-center p-4 bg-[#f8fafd]">
+            <div class="max-w-4xl w-full bg-white rounded-3xl shadow-2xl border border-slate-100 overflow-hidden grid grid-cols-1 md:grid-cols-2">
+                
+                <!-- Left Branding Side -->
+                <div class="bg-gradient-to-br from-[#fff2f4] via-[#fef5f7] to-[#fdeef1] p-6 sm:p-12 flex flex-col justify-between relative overflow-hidden">
+                    <div>
+                        <div class="flex items-center space-x-2.5">
+                            <div class="w-10 h-10 rounded-full bg-red-600 flex items-center justify-center shadow-lg shadow-red-500/30">
+                                <i data-lucide="droplet" class="w-6 h-6 text-white fill-current"></i>
+                            </div>
+                            <div>
+                                <span class="text-xl font-extrabold text-[#0d2149] tracking-tight">BloodChain <span class="text-red-600">AI</span></span>
+                                <p class="text-[10px] text-slate-500 font-bold tracking-wider uppercase">Predict • Optimize • Save Lives</p>
+                            </div>
+                        </div>
+
+                        <div class="mt-6 sm:mt-8">
+                            <h2 class="text-lg sm:text-xl font-extrabold text-[#0d2149] leading-snug">Smarter Blood Management<br>for a Healthier Tomorrow</h2>
+                        </div>
+                    </div>
+
+                    <!-- Blood Bag & Heart Illustration -->
+                    <div class="my-6 sm:my-8 flex justify-center items-center relative">
+                        <div class="w-40 h-40 rounded-full bg-red-200/40 absolute blur-2xl"></div>
+                        <div class="relative flex items-center space-x-3">
+                            <div class="w-20 h-28 bg-white border-2 border-red-400 rounded-b-2xl rounded-t-lg p-1.5 flex flex-col justify-between shadow-lg relative">
+                                <div class="w-4 h-2 bg-red-400 mx-auto rounded-t-sm -mt-2.5"></div>
+                                <div class="w-full bg-red-500/10 h-16 rounded-b-xl flex items-center justify-center">
+                                    <div class="w-7 h-7 bg-red-600 rounded-full flex items-center justify-center shadow">
+                                        <i data-lucide="plus" class="w-4 h-4 text-white"></i>
+                                    </div>
+                                </div>
+                                <div class="w-1.5 h-6 bg-red-400 mx-auto -mb-4 rounded-full"></div>
+                            </div>
+                            
+                            <div class="w-10 h-1 bg-red-400/80 relative">
+                                <div class="w-3 h-3 bg-red-500 rounded-full absolute -top-1 left-3.5 animate-ping"></div>
+                            </div>
+
+                            <div class="w-14 h-14 rounded-2xl bg-gradient-to-tr from-red-600 to-rose-500 flex items-center justify-center shadow-xl shadow-red-500/30">
+                                <i data-lucide="heart" class="w-7 h-7 text-white fill-current"></i>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="text-[11px] text-slate-500">
+                        <p class="font-bold text-[#0d2149]">Hackwell 2.0 • Saranathan College of Engg</p>
+                        <p class="font-medium text-slate-400">Team Outliers (#H2O080)</p>
+                    </div>
+                </div>
+
+                <!-- Right Login Form Side -->
+                <div class="p-6 sm:p-12 flex flex-col justify-center">
+                    <div class="mb-6">
+                        <h3 class="text-2xl font-bold text-[#0d2149]">Welcome Back!</h3>
+                        <p class="text-xs text-slate-500 mt-1">Login to access the BloodChain AI dashboard</p>
+                    </div>
+
+                    <form id="loginForm" class="space-y-4">
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-700 mb-1">Email / Username</label>
+                            <div class="relative">
+                                <i data-lucide="user" class="w-4 h-4 text-slate-400 absolute left-3.5 top-3"></i>
+                                <input type="text" id="loginUsername" value="gov_hospital_admin" required class="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-800 focus:outline-none focus:border-[#0d2149] focus:bg-white transition">
+                            </div>
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-700 mb-1">Password</label>
+                            <div class="relative">
+                                <i data-lucide="lock" class="w-4 h-4 text-slate-400 absolute left-3.5 top-3"></i>
+                                <input type="password" id="loginPassword" value="••••••••" required class="w-full pl-10 pr-10 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-800 focus:outline-none focus:border-[#0d2149] focus:bg-white transition">
+                                <i data-lucide="eye" class="w-4 h-4 text-slate-400 absolute right-3.5 top-3 cursor-pointer"></i>
+                            </div>
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-700 mb-1">Select User Type</label>
+                            <div class="relative">
+                                <select id="loginUserType" class="w-full pl-3 pr-8 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-800 font-medium focus:outline-none focus:border-[#0d2149] focus:bg-white appearance-none cursor-pointer">
+                                    <option value="Government Hospital">🏥 Hospital</option>
+                                    <option value="Blood Bank B">🩸 Blood Bank</option>
+                                    <option value="Regional Health Admin">⚙️ Admin</option>
+                                </select>
+                                <i data-lucide="chevron-down" class="w-4 h-4 text-slate-400 absolute right-3 top-3 pointer-events-none"></i>
+                            </div>
+                        </div>
+
+                        <button type="submit" class="w-full py-3 bg-[#0d2149] hover:bg-[#142952] text-white font-semibold rounded-xl text-xs shadow-lg shadow-[#0d2149]/20 transition transform active:scale-[0.99] mt-2">
+                            Login
+                        </button>
+
+                        <p class="text-[11px] text-center text-slate-400 pt-2">
+                            Don't have an account? <a href="#" class="text-[#0d2149] font-semibold hover:underline">Contact your administrator</a>
+                        </p>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+
+        <!-- ======================================================== -->
+        <!-- MAIN APP CONTAINER (Sidebar + Topbar + Views)            -->
+        <!-- ======================================================== -->
+        <div id="appContainer" class="hidden min-h-[calc(100vh-36px)] flex flex-col md:flex-row relative">
+
+            <!-- MOBILE SLIDE-OVER BACKDROP -->
+            <div id="mobileBackdrop" class="fixed inset-0 bg-black/60 z-30 hidden md:hidden"></div>
+
+            <!-- DEEP NAVY SIDEBAR -->
+            <aside id="appSidebar" class="w-64 bg-[#0d2149] text-slate-300 flex flex-col justify-between flex-shrink-0 z-40 fixed md:static inset-y-0 left-0 transform -translate-x-full md:translate-x-0 transition-transform duration-300 ease-in-out">
+                <div>
+                    <!-- Brand Header -->
+                    <div class="h-16 flex items-center justify-between px-6 border-b border-slate-800">
+                        <div class="flex items-center space-x-2.5">
+                            <div class="w-8 h-8 rounded-lg bg-red-600 flex items-center justify-center shadow">
+                                <i data-lucide="droplet" class="w-5 h-5 text-white fill-current"></i>
+                            </div>
+                            <span class="text-lg font-bold text-white tracking-tight">BloodChain <span class="text-red-500">AI</span></span>
+                        </div>
+                        <button id="btnCloseMobileSidebar" class="md:hidden text-slate-400 hover:text-white">
+                            <i data-lucide="x" class="w-5 h-5"></i>
+                        </button>
+                    </div>
+
+                    <!-- Navigation Links -->
+                    <nav class="p-4 space-y-1.5 text-xs font-medium">
+                        <button class="nav-item active w-full flex items-center space-x-3 px-3.5 py-2.5 rounded-xl bg-blue-600 text-white shadow-sm transition" data-view="viewDashboard">
+                            <i data-lucide="layout-dashboard" class="w-4 h-4"></i>
+                            <span>Dashboard</span>
+                        </button>
+
+                        <button class="nav-item w-full flex items-center space-x-3 px-3.5 py-2.5 rounded-xl text-slate-300 hover:bg-slate-800 hover:text-white transition" data-view="viewInventory">
+                            <i data-lucide="package" class="w-4 h-4"></i>
+                            <span>Blood Inventory</span>
+                        </button>
+
+                        <button class="nav-item w-full flex items-center space-x-3 px-3.5 py-2.5 rounded-xl text-slate-300 hover:bg-slate-800 hover:text-white transition" data-view="viewAIPrediction">
+                            <i data-lucide="brain-circuit" class="w-4 h-4"></i>
+                            <span>AI Demand Prediction</span>
+                        </button>
+
+                        <button class="nav-item w-full flex items-center space-x-3 px-3.5 py-2.5 rounded-xl text-slate-300 hover:bg-slate-800 hover:text-white transition" data-view="viewDistribution">
+                            <i data-lucide="truck" class="w-4 h-4"></i>
+                            <span>Smart Distribution</span>
+                        </button>
+
+                        <button class="nav-item w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-slate-300 hover:bg-slate-800 hover:text-white transition" data-view="viewAlerts">
+                            <div class="flex items-center space-x-3">
+                                <i data-lucide="bell" class="w-4 h-4"></i>
+                                <span>Alerts</span>
+                            </div>
+                            <span id="navAlertBadge" class="bg-red-500 text-white text-[10px] font-bold px-1.5 py-0.2 rounded-full">3</span>
+                        </button>
+
+                        <button class="nav-item w-full flex items-center space-x-3 px-3.5 py-2.5 rounded-xl text-slate-300 hover:bg-slate-800 hover:text-white transition" data-view="viewReports">
+                            <i data-lucide="bar-chart-3" class="w-4 h-4"></i>
+                            <span>Reports</span>
+                        </button>
+                    </nav>
+                </div>
+
+                <!-- Sidebar Bottom: Hackwell Info & Logout -->
+                <div class="p-4 border-t border-slate-800 space-y-3">
+                    <div class="bg-slate-900/60 p-2.5 rounded-xl text-[11px] text-slate-400">
+                        <p class="font-semibold text-white">Hackwell 2.0</p>
+                        <p>Team Outliers (#H2O080)</p>
+                    </div>
+
+                    <button id="btnLogout" class="w-full flex items-center space-x-3 px-3 py-2 text-xs font-medium text-slate-400 hover:text-red-400 hover:bg-slate-800/60 rounded-xl transition">
+                        <i data-lucide="log-out" class="w-4 h-4"></i>
+                        <span>Logout</span>
+                    </button>
+                </div>
+            </aside>
+
+            <!-- MAIN VIEWPORT -->
+            <div class="flex-1 flex flex-col min-w-0 overflow-y-auto">
+
+                <!-- TOP NAVBAR -->
+                <header class="h-16 bg-white border-b border-slate-200 px-4 sm:px-6 flex items-center justify-between flex-shrink-0">
+                    <div class="flex items-center space-x-3">
+                        <!-- Mobile Hamburger Button -->
+                        <button id="btnOpenMobileSidebar" class="md:hidden p-2 rounded-lg text-slate-600 hover:bg-slate-100">
+                            <i data-lucide="menu" class="w-5 h-5"></i>
+                        </button>
+
+                        <div>
+                            <h1 id="topPageTitle" class="text-base sm:text-lg font-bold text-slate-900 leading-tight">Dashboard</h1>
+                            <p id="topPageSubtitle" class="text-[11px] sm:text-xs text-slate-500 hidden sm:block">Monitor blood inventory, demand and distribution at a glance.</p>
+                        </div>
+                    </div>
+
+                    <div class="flex items-center space-x-2 sm:space-x-3">
+                        <!-- Notification Bell -->
+                        <button id="btnBellAlerts" class="relative p-2 rounded-full hover:bg-slate-100 text-slate-600 transition" title="View Alerts">
+                            <i data-lucide="bell" class="w-5 h-5"></i>
+                            <span class="w-2 h-2 bg-red-500 rounded-full absolute top-1.5 right-1.5"></span>
+                        </button>
+
+                        <!-- User Selector Dropdown -->
+                        <div class="flex items-center space-x-1.5 border border-slate-200 rounded-xl px-2.5 py-1.5 bg-slate-50">
+                            <i data-lucide="building-2" class="w-4 h-4 text-blue-600"></i>
+                            <span id="currentUserLabel" class="text-xs font-semibold text-slate-800 max-w-[110px] sm:max-w-none truncate">Government Hospital</span>
+                        </div>
+
+                        <!-- Reset Demo Button -->
+                        <button id="btnResetDemoData" class="text-xs font-semibold text-blue-600 hover:bg-blue-50 px-2 py-1.5 rounded-lg border border-blue-200 transition" title="Reset Demo Data">
+                            ↺
+                        </button>
+                    </div>
+                </header>
+
+                <!-- MAIN CONTENT AREA -->
+                <main class="p-4 sm:p-6 max-w-7xl w-full mx-auto space-y-6">
+
+                    <!-- ======================================================== -->
+                    <!-- SCREEN 2: DASHBOARD VIEW                                 -->
+                    <!-- ======================================================== -->
+                    <div id="viewDashboard" class="view-panel space-y-6">
+                        <!-- 4 Top KPI Stat Cards -->
+                        <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-5">
+                            
+                            <!-- Card 1: Total Units Available -->
+                            <div class="bg-white rounded-2xl p-4 sm:p-5 border border-slate-100 shadow-sm flex items-start justify-between">
+                                <div>
+                                    <p class="text-[11px] sm:text-xs text-slate-500 font-medium">Total Units</p>
+                                    <h3 id="dashTotalUnits" class="text-2xl sm:text-3xl font-bold text-slate-900 mt-1">540</h3>
+                                    <p class="text-[10px] sm:text-[11px] text-emerald-600 font-semibold mt-1 flex items-center">
+                                        ↑ 12% vs last week
+                                    </p>
+                                </div>
+                                <div class="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-red-50 text-red-500 flex items-center justify-center">
+                                    <i data-lucide="droplet" class="w-4 h-4 sm:w-5 sm:h-5 fill-current"></i>
+                                </div>
+                            </div>
+
+                            <!-- Card 2: Hospitals Connected -->
+                            <div class="bg-white rounded-2xl p-4 sm:p-5 border border-slate-100 shadow-sm flex items-start justify-between">
+                                <div>
+                                    <p class="text-[11px] sm:text-xs text-slate-500 font-medium">Hospitals</p>
+                                    <h3 id="dashHospitalsCount" class="text-2xl sm:text-3xl font-bold text-slate-900 mt-1">12</h3>
+                                    <p class="text-[10px] sm:text-[11px] text-blue-600 font-semibold mt-1 flex items-center">
+                                        ↑ 2 new
+                                    </p>
+                                </div>
+                                <div class="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-blue-50 text-blue-600 flex items-center justify-center">
+                                    <i data-lucide="building-2" class="w-4 h-4 sm:w-5 sm:h-5"></i>
+                                </div>
+                            </div>
+
+                            <!-- Card 3: Blood Banks Connected -->
+                            <div class="bg-white rounded-2xl p-4 sm:p-5 border border-slate-100 shadow-sm flex items-start justify-between">
+                                <div>
+                                    <p class="text-[11px] sm:text-xs text-slate-500 font-medium">Blood Banks</p>
+                                    <h3 id="dashBloodBanksCount" class="text-2xl sm:text-3xl font-bold text-slate-900 mt-1">5</h3>
+                                    <p class="text-[10px] sm:text-[11px] text-purple-600 font-semibold mt-1 flex items-center">
+                                        ↑ 1 new
+                                    </p>
+                                </div>
+                                <div class="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-purple-50 text-purple-600 flex items-center justify-center">
+                                    <i data-lucide="landmark" class="w-4 h-4 sm:w-5 sm:h-5"></i>
+                                </div>
+                            </div>
+
+                            <!-- Card 4: Active Alerts -->
+                            <div class="bg-white rounded-2xl p-4 sm:p-5 border border-slate-100 shadow-sm flex items-start justify-between">
+                                <div>
+                                    <p class="text-[11px] sm:text-xs text-slate-500 font-medium">Active Alerts</p>
+                                    <h3 id="dashAlertsCount" class="text-2xl sm:text-3xl font-bold text-slate-900 mt-1">3</h3>
+                                    <button onclick="switchView('viewAlerts')" class="text-[10px] sm:text-[11px] text-orange-500 hover:text-orange-600 font-semibold mt-1 flex items-center">
+                                        View all &rarr;
+                                    </button>
+                                </div>
+                                <div class="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-orange-50 text-orange-500 flex items-center justify-center">
+                                    <i data-lucide="alert-triangle" class="w-4 h-4 sm:w-5 sm:h-5"></i>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Main Grid: Blood Inventory Table + Quick Actions -->
+                        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                            
+                            <!-- Left 2 Cols: Blood Inventory Table -->
+                            <div class="lg:col-span-2 bg-white rounded-2xl p-5 sm:p-6 border border-slate-100 shadow-sm">
+                                <h2 class="text-sm font-bold text-slate-900 mb-4">Blood Inventory</h2>
+                                <div class="overflow-x-auto">
+                                    <table class="w-full text-left text-xs">
+                                        <thead>
+                                            <tr class="text-slate-400 border-b border-slate-100 text-[11px]">
+                                                <th class="pb-3 font-semibold">Blood Group</th>
+                                                <th class="pb-3 font-semibold">Available</th>
+                                                <th class="pb-3 font-semibold">Status</th>
+                                                <th class="pb-3 font-semibold">Expiring Soon</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="dashInventoryTableBody" class="divide-y divide-slate-100 text-slate-700 font-medium">
+                                            <!-- Rendered via JS -->
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+
+                            <!-- Right 1 Col: Quick Actions & Attention Notice -->
+                            <div class="bg-white rounded-2xl p-5 sm:p-6 border border-slate-100 shadow-sm flex flex-col justify-between space-y-4">
+                                <div>
+                                    <h2 class="text-sm font-bold text-slate-900 mb-4">Quick Actions</h2>
+                                    <div class="space-y-3">
+                                        <button onclick="switchView('viewAIPrediction')" class="w-full flex items-center space-x-3 px-4 py-3 rounded-xl border border-slate-200 hover:border-blue-400 hover:bg-blue-50/40 text-slate-800 text-xs font-semibold transition group">
+                                            <div class="w-8 h-8 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center group-hover:bg-blue-600 group-hover:text-white transition">
+                                                <i data-lucide="line-chart" class="w-4 h-4"></i>
+                                            </div>
+                                            <span>AI Demand Prediction</span>
+                                        </button>
+
+                                        <button onclick="switchView('viewInventory')" class="w-full flex items-center space-x-3 px-4 py-3 rounded-xl border border-slate-200 hover:border-blue-400 hover:bg-blue-50/40 text-slate-800 text-xs font-semibold transition group">
+                                            <div class="w-8 h-8 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center group-hover:bg-blue-600 group-hover:text-white transition">
+                                                <i data-lucide="boxes" class="w-4 h-4"></i>
+                                            </div>
+                                            <span>Manage Inventory</span>
+                                        </button>
+
+                                        <button onclick="switchView('viewDistribution')" class="w-full flex items-center space-x-3 px-4 py-3 rounded-xl border border-slate-200 hover:border-blue-400 hover:bg-blue-50/40 text-slate-800 text-xs font-semibold transition group">
+                                            <div class="w-8 h-8 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center group-hover:bg-blue-600 group-hover:text-white transition">
+                                                <i data-lucide="truck" class="w-4 h-4"></i>
+                                            </div>
+                                            <span>Smart Distribution</span>
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <!-- Attention Warning Box -->
+                                <div class="p-3.5 bg-amber-50 border border-amber-200 rounded-xl text-amber-800 flex items-center space-x-2.5">
+                                    <i data-lucide="alert-triangle" class="w-4 h-4 text-amber-500 flex-shrink-0"></i>
+                                    <span class="text-xs font-medium">3 blood groups need attention (B-, O-, AB-)</span>
+                                </div>
+                            </div>
+
+                        </div>
+                    </div>
+
+                    <!-- ======================================================== -->
+                    <!-- SCREEN 3: AI DEMAND PREDICTION                           -->
+                    <!-- ======================================================== -->
+                    <div id="viewAIPrediction" class="view-panel hidden space-y-6">
+                        
+                        <div class="grid grid-cols-1 lg:grid-cols-4 gap-6">
+                            
+                            <!-- Left Filter Form Panel -->
+                            <div class="bg-white rounded-2xl p-5 sm:p-6 border border-slate-100 shadow-sm space-y-4">
+                                <div>
+                                    <label class="block text-xs font-bold text-slate-700 mb-1">Hospital</label>
+                                    <select id="predictHospitalSelect" class="w-full py-2.5 px-3 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium text-slate-800 focus:outline-none focus:border-blue-500">
+                                        <option value="1" selected>Government Hospital</option>
+                                        <option value="2">Apollo Speciality Hospital</option>
+                                        <option value="3">SRM Medical College Hospital</option>
+                                    </select>
+                                </div>
+
+                                <div>
+                                    <label class="block text-xs font-bold text-slate-700 mb-1">Blood Group</label>
+                                    <select id="predictBloodGroupSelect" class="w-full py-2.5 px-3 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium text-slate-800 focus:outline-none focus:border-blue-500">
+                                        <option value="B+" selected>B+</option>
+                                        <option value="O+">O+</option>
+                                        <option value="O-">O-</option>
+                                        <option value="B-">B-</option>
+                                        <option value="A+">A+</option>
+                                        <option value="A-">A-</option>
+                                        <option value="AB+">AB+</option>
+                                        <option value="AB-">AB-</option>
+                                    </select>
+                                </div>
+
+                                <div>
+                                    <label class="block text-xs font-bold text-slate-700 mb-1">Prediction Period</label>
+                                    <select id="predictPeriodSelect" class="w-full py-2.5 px-3 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium text-slate-800 focus:outline-none focus:border-blue-500">
+                                        <option value="7_DAYS" selected>Next 7 Days</option>
+                                        <option value="14_DAYS">Next 14 Days</option>
+                                        <option value="30_DAYS">Next 30 Days</option>
+                                    </select>
+                                </div>
+
+                                <button id="btnRunPrediction" class="w-full py-2.5 bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold rounded-xl shadow-md shadow-blue-500/20 transition">
+                                    Predict Demand
+                                </button>
+                            </div>
+
+                            <!-- Right Content: 3 Metric Cards + Chart + Recommendation -->
+                            <div class="lg:col-span-3 space-y-5">
+                                
+                                <!-- 3 Stat Cards -->
+                                <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
+                                    <div class="bg-white rounded-2xl p-4 border border-slate-100 shadow-sm">
+                                        <p class="text-xs text-slate-500 font-medium">Current Stock</p>
+                                        <h4 id="predCurrentStock" class="text-2xl font-bold text-slate-900 mt-1">75 <span class="text-xs font-normal text-slate-400">units</span></h4>
+                                    </div>
+
+                                    <div class="bg-white rounded-2xl p-4 border border-slate-100 shadow-sm">
+                                        <p class="text-xs text-slate-500 font-medium">Predicted Demand</p>
+                                        <h4 id="predPredictedDemand" class="text-2xl font-bold text-slate-900 mt-1">110 <span class="text-xs font-normal text-slate-400">units</span></h4>
+                                    </div>
+
+                                    <div class="bg-white rounded-2xl p-4 border border-slate-100 shadow-sm">
+                                        <p class="text-xs text-slate-500 font-medium">Expected Shortage</p>
+                                        <h4 id="predExpectedShortage" class="text-2xl font-bold text-red-500 mt-1">35 <span class="text-xs font-normal text-red-400">units</span></h4>
+                                    </div>
+                                </div>
+
+                                <!-- Line Chart Container -->
+                                <div class="bg-white rounded-2xl p-5 sm:p-6 border border-slate-100 shadow-sm space-y-3">
+                                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                                        <h3 id="predChartTitle" class="text-xs font-bold text-slate-900">Demand Forecast (B+)</h3>
+                                        <div class="flex items-center space-x-4 text-[11px] font-medium">
+                                            <span class="flex items-center space-x-1.5"><span class="w-2.5 h-2.5 rounded-full bg-blue-600"></span><span class="text-slate-500">Past</span></span>
+                                            <span class="flex items-center space-x-1.5"><span class="w-2.5 h-2.5 rounded-full bg-orange-500"></span><span class="text-slate-500">Predicted</span></span>
+                                        </div>
+                                    </div>
+                                    <div class="h-60 sm:h-64 relative">
+                                        <canvas id="predictionLineChart"></canvas>
+                                    </div>
+                                </div>
+
+                                <!-- Red Recommendation Banner -->
+                                <div class="bg-red-50 border border-red-200 rounded-2xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                                    <div class="flex items-center space-x-3">
+                                        <div class="w-8 h-8 rounded-full bg-red-100 text-red-600 flex items-center justify-center flex-shrink-0">
+                                            <i data-lucide="alert-circle" class="w-4 h-4"></i>
+                                        </div>
+                                        <div>
+                                            <p class="text-xs font-bold text-red-700">AI Recommendation</p>
+                                            <p id="predRecommendationText" class="text-xs text-red-600">Collect or transfer 35 units of B+ to meet predicted demand.</p>
+                                        </div>
+                                    </div>
+                                    <button onclick="switchView('viewDistribution')" class="px-3.5 py-1.5 bg-red-600 hover:bg-red-500 text-white text-xs font-semibold rounded-lg shadow transition whitespace-nowrap self-end sm:self-auto">
+                                        Match Supply &rarr;
+                                    </button>
+                                </div>
+
+                            </div>
+
+                        </div>
+
+                    </div>
+
+                    <!-- ======================================================== -->
+                    <!-- SCREEN 4: SMART BLOOD DISTRIBUTION                      -->
+                    <!-- ======================================================== -->
+                    <div id="viewDistribution" class="view-panel hidden space-y-6">
+                        
+                        <!-- Visual AI Match Diagram -->
+                        <div class="bg-white rounded-2xl p-6 sm:p-8 border border-slate-100 shadow-sm">
+                            <div class="grid grid-cols-1 md:grid-cols-7 items-center gap-4">
+                                
+                                <!-- Left: Hospital A Card -->
+                                <div class="md:col-span-3 bg-blue-50/50 border-2 border-blue-200 rounded-2xl p-5 sm:p-6 flex flex-col items-center text-center space-y-2">
+                                    <div class="w-12 h-12 rounded-2xl bg-blue-100 text-blue-600 flex items-center justify-center shadow-sm">
+                                        <i data-lucide="building-2" class="w-6 h-6"></i>
+                                    </div>
+                                    <h3 class="text-sm font-bold text-slate-900">Hospital A</h3>
+                                    <p class="text-xs text-slate-600 font-semibold">Needs <span class="text-slate-900 font-bold" id="distHospitalNeeds">B+ &rarr; 35 units</span></p>
+                                    <span class="text-[11px] font-bold bg-red-100 text-red-600 px-3 py-1 rounded-full">High Priority</span>
+                                </div>
+
+                                <!-- Center: AI Match Connector -->
+                                <div class="md:col-span-1 flex flex-col items-center justify-center py-2">
+                                    <div class="flex items-center justify-center space-x-1">
+                                        <i data-lucide="arrow-left" class="w-4 h-4 text-slate-400"></i>
+                                        <div class="px-2.5 py-1.5 bg-blue-50 text-blue-700 border border-blue-200 rounded-xl text-[11px] font-bold flex items-center space-x-1 shadow-sm">
+                                            <i data-lucide="brain-circuit" class="w-3.5 h-3.5 text-blue-600"></i>
+                                            <span>AI MATCH</span>
+                                        </div>
+                                        <i data-lucide="arrow-right" class="w-4 h-4 text-slate-400"></i>
+                                    </div>
+                                </div>
+
+                                <!-- Right: Blood Bank B Card -->
+                                <div class="md:col-span-3 bg-emerald-50/50 border-2 border-emerald-200 rounded-2xl p-5 sm:p-6 flex flex-col items-center text-center space-y-2">
+                                    <div class="w-12 h-12 rounded-2xl bg-emerald-100 text-emerald-600 flex items-center justify-center shadow-sm">
+                                        <i data-lucide="landmark" class="w-6 h-6"></i>
+                                    </div>
+                                    <h3 class="text-sm font-bold text-slate-900">Blood Bank B</h3>
+                                    <p class="text-xs text-slate-600 font-semibold">Available <span class="text-slate-900 font-bold" id="distBloodBankAvail">B+ &rarr; 60 units</span></p>
+                                    <span class="text-[11px] font-bold bg-emerald-100 text-emerald-700 px-3 py-1 rounded-full">Sufficient</span>
+                                </div>
+
+                            </div>
+                        </div>
+
+                        <!-- AI Recommendation Action Card -->
+                        <div class="bg-white rounded-2xl p-5 sm:p-6 border border-slate-100 shadow-sm space-y-4">
+                            <div class="flex items-center space-x-3">
+                                <div class="w-10 h-10 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center">
+                                    <i data-lucide="bot" class="w-5 h-5"></i>
+                                </div>
+                                <div>
+                                    <h3 class="text-sm font-bold text-slate-900">Recommendation:</h3>
+                                    <p id="distRecActionText" class="text-xs text-slate-600 mt-0.5">Transfer 35 units of B+ from Blood Bank B &rarr; Hospital A</p>
+                                </div>
+                            </div>
+
+                            <div class="pt-3 border-t border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                                <div class="flex items-center space-x-2">
+                                    <span class="text-xs font-semibold text-slate-500">Priority:</span>
+                                    <span class="text-[11px] font-bold bg-red-500 text-white px-3 py-0.5 rounded-full">HIGH</span>
+                                </div>
+
+                                <button id="btnApproveDistribution" class="w-full sm:w-auto px-6 py-2.5 bg-blue-700 hover:bg-blue-600 text-white text-xs font-bold rounded-xl shadow-lg shadow-blue-700/20 transition transform active:scale-95">
+                                    Approve Distribution
+                                </button>
+                            </div>
+                        </div>
+
+                    </div>
+
+                    <!-- ======================================================== -->
+                    <!-- SCREEN 5: ALERTS & NOTIFICATIONS                         -->
+                    <!-- ======================================================== -->
+                    <div id="viewAlerts" class="view-panel hidden space-y-4">
+                        <div id="alertsListContainer" class="space-y-3">
+                            <!-- Populated dynamically via JS -->
+                        </div>
+                    </div>
+
+                    <!-- ======================================================== -->
+                    <!-- SCREEN 6: DEMAND & INVENTORY REPORT                     -->
+                    <!-- ======================================================== -->
+                    <div id="viewReports" class="view-panel hidden space-y-6">
+                        
+                        <!-- Subtabs -->
+                        <div class="flex border-b border-slate-200 space-x-4">
+                            <button class="report-subtab active py-2 text-xs font-bold border-b-2 border-blue-600 text-blue-600">Demand Forecast</button>
+                            <button class="report-subtab py-2 text-xs font-medium text-slate-400 hover:text-slate-600">Inventory</button>
+                            <button class="report-subtab py-2 text-xs font-medium text-slate-400 hover:text-slate-600">Distribution</button>
+                        </div>
+
+                        <!-- 2 Charts Grid -->
+                        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                            
+                            <!-- Left Bar Chart: Blood Demand vs Predicted Demand -->
+                            <div class="bg-white rounded-2xl p-5 sm:p-6 border border-slate-100 shadow-sm space-y-3">
+                                <div class="flex justify-between items-center">
+                                    <h3 class="text-xs font-bold text-slate-900">Blood Demand vs Predicted Demand (B+)</h3>
+                                    <div class="flex items-center space-x-3 text-[11px]">
+                                        <span class="flex items-center space-x-1"><span class="w-2.5 h-2.5 rounded bg-blue-600"></span><span class="text-slate-500">Actual</span></span>
+                                        <span class="flex items-center space-x-1"><span class="w-2.5 h-2.5 rounded bg-orange-500"></span><span class="text-slate-500">Predicted</span></span>
+                                    </div>
+                                </div>
+                                <div class="h-60 sm:h-64 relative">
+                                    <canvas id="reportsBarChart"></canvas>
+                                </div>
+                            </div>
+
+                            <!-- Right Donut Chart: Inventory Distribution -->
+                            <div class="bg-white rounded-2xl p-5 sm:p-6 border border-slate-100 shadow-sm space-y-3">
+                                <h3 class="text-xs font-bold text-slate-900">Inventory Distribution</h3>
+                                <div class="grid grid-cols-1 sm:grid-cols-2 items-center gap-4">
+                                    <div class="h-52 sm:h-56 relative flex items-center justify-center">
+                                        <canvas id="reportsDonutChart"></canvas>
+                                        <div class="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+                                            <span class="text-[10px] text-slate-400 font-semibold uppercase">Total</span>
+                                            <span class="text-xl font-black text-slate-900">540</span>
+                                        </div>
+                                    </div>
+                                    <div id="reportsDonutLegend" class="space-y-1 text-xs">
+                                        <!-- Populated via JS -->
+                                    </div>
+                                </div>
+                            </div>
+
+                        </div>
+
+                        <!-- Key Insights Card -->
+                        <div class="bg-blue-50/60 border border-blue-200 rounded-2xl p-5 space-y-2">
+                            <div class="flex items-center space-x-2 text-blue-700 font-bold text-xs">
+                                <i data-lucide="lightbulb" class="w-4 h-4"></i>
+                                <span>Key Insights</span>
+                            </div>
+                            <ul class="text-xs text-slate-600 space-y-1 pl-6 list-disc font-medium">
+                                <li>B+ demand is expected to increase by 46% next week.</li>
+                                <li>B- and AB- are critically low.</li>
+                                <li>Consider early collection for O- due to expiry risk.</li>
+                            </ul>
+                        </div>
+
+                    </div>
+
+                    <!-- ======================================================== -->
+                    <!-- SCREEN 7: BLOOD INVENTORY MANAGEMENT                     -->
+                    <!-- ======================================================== -->
+                    <div id="viewInventory" class="view-panel hidden space-y-6">
+                        <div class="bg-white rounded-2xl p-5 sm:p-6 border border-slate-100 shadow-sm space-y-5">
+                            
+                            <!-- Header & Actions -->
+                            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-100 pb-4">
+                                <div>
+                                    <h2 class="text-sm font-bold text-slate-900">Live Blood Inventory Management</h2>
+                                    <p class="text-xs text-slate-500">Manage all blood groups, record expiry dates, and monitor shortage thresholds.</p>
+                                </div>
+                                <div class="flex items-center space-x-3">
+                                    <button id="btnOpenIssueModal" class="px-3.5 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold rounded-xl transition">
+                                        - Issue / Transfuse Stock
+                                    </button>
+                                    <button id="btnOpenAddModal" class="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold rounded-xl shadow transition">
+                                        + Add New Stock
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- Inventory Table -->
+                            <div class="overflow-x-auto">
+                                <table class="w-full text-left text-xs">
+                                    <thead>
+                                        <tr class="text-slate-400 border-b border-slate-100 text-[11px]">
+                                            <th class="pb-3 font-semibold">Location</th>
+                                            <th class="pb-3 font-semibold">Blood Group</th>
+                                            <th class="pb-3 font-semibold">Component</th>
+                                            <th class="pb-3 font-semibold">Units</th>
+                                            <th class="pb-3 font-semibold">Collection</th>
+                                            <th class="pb-3 font-semibold">Expiry</th>
+                                            <th class="pb-3 font-semibold">Shelf Status</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="fullInventoryTableBody" class="divide-y divide-slate-100 text-slate-700">
+                                        <!-- Populated via JS -->
+                                    </tbody>
+                                </table>
+                            </div>
+
+                        </div>
+                    </div>
+
+                </main>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- MODAL: ADD BLOOD STOCK -->
+    <div id="addStockModal" class="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center hidden p-4">
+        <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl border border-slate-100 space-y-4">
+            <div class="flex justify-between items-center">
+                <h3 class="text-sm font-bold text-slate-900">+ Add Blood Stock</h3>
+                <button onclick="closeModals()" class="text-slate-400 hover:text-slate-600">&times;</button>
+            </div>
+            <form id="formAddStock" class="space-y-3 text-xs">
+                <div>
+                    <label class="block font-semibold text-slate-700 mb-1">Facility Name</label>
+                    <input type="text" id="addFacilityName" value="Government Hospital" class="w-full p-2 border rounded-lg bg-slate-50">
+                </div>
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block font-semibold text-slate-700 mb-1">Blood Group</label>
+                        <select id="addBloodGroup" class="w-full p-2 border rounded-lg bg-slate-50">
+                            <option value="A+">A+</option>
+                            <option value="A-">A-</option>
+                            <option value="B+">B+</option>
+                            <option value="B-">B-</option>
+                            <option value="O+">O+</option>
+                            <option value="O-">O-</option>
+                            <option value="AB+">AB+</option>
+                            <option value="AB-">AB-</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block font-semibold text-slate-700 mb-1">Units Count</label>
+                        <input type="number" id="addUnits" value="10" min="1" max="100" class="w-full p-2 border rounded-lg bg-slate-50">
+                    </div>
+                </div>
+                <div>
+                    <label class="block font-semibold text-slate-700 mb-1">Expiry Date</label>
+                    <input type="date" id="addExpiryDate" class="w-full p-2 border rounded-lg bg-slate-50">
+                </div>
+                <button type="submit" class="w-full py-2.5 bg-blue-600 hover:bg-blue-500 text-white font-bold rounded-xl transition mt-2">
+                    Save to Inventory
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL: ISSUE BLOOD STOCK -->
+    <div id="issueStockModal" class="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center hidden p-4">
+        <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl border border-slate-100 space-y-4">
+            <div class="flex justify-between items-center">
+                <h3 class="text-sm font-bold text-slate-900">- Issue / Transfuse Stock</h3>
+                <button onclick="closeModals()" class="text-slate-400 hover:text-slate-600">&times;</button>
+            </div>
+            <form id="formIssueStock" class="space-y-3 text-xs">
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block font-semibold text-slate-700 mb-1">Blood Group</label>
+                        <select id="issueBloodGroup" class="w-full p-2 border rounded-lg bg-slate-50">
+                            <option value="A+">A+</option>
+                            <option value="A-">A-</option>
+                            <option value="B+">B+</option>
+                            <option value="B-">B-</option>
+                            <option value="O+">O+</option>
+                            <option value="O-">O-</option>
+                            <option value="AB+">AB+</option>
+                            <option value="AB-">AB-</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block font-semibold text-slate-700 mb-1">Units to Issue</label>
+                        <input type="number" id="issueUnits" value="2" min="1" max="50" class="w-full p-2 border rounded-lg bg-slate-50">
+                    </div>
+                </div>
+                <div>
+                    <label class="block font-semibold text-slate-700 mb-1">Clinical Reason / Department</label>
+                    <input type="text" id="issueReason" value="Emergency ICU Trauma Case" class="w-full p-2 border rounded-lg bg-slate-50">
+                </div>
+                <button type="submit" class="w-full py-2.5 bg-red-600 hover:bg-red-500 text-white font-bold rounded-xl transition mt-2">
+                    Issue Units
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL: MOBILE PHONE CONNECT -->
+    <div id="phoneConnectModal" class="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center hidden p-4">
+        <div class="bg-white rounded-2xl max-w-sm w-full p-6 shadow-2xl border border-slate-100 space-y-4 text-center">
+            <div class="w-12 h-12 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center mx-auto">
+                <i data-lucide="smartphone" class="w-6 h-6"></i>
+            </div>
+            <div>
+                <h3 class="text-sm font-bold text-slate-900">Open on your Mobile Phone</h3>
+                <p class="text-xs text-slate-500 mt-1">Make sure your phone is on the same Wi-Fi network as this computer, then open this URL in your mobile browser:</p>
+            </div>
+            <div class="p-3 bg-slate-100 rounded-xl font-mono text-xs text-blue-700 font-bold select-all break-all" id="mobileConnectURL">
+                http://localhost:5000
+            </div>
+            <button onclick="document.getElementById('phoneConnectModal').classList.add('hidden')" class="w-full py-2 bg-slate-800 text-white text-xs font-semibold rounded-xl">
+                Got it
+            </button>
+        </div>
+    </div>
+
+    <!-- Notification Toast -->
+    <div id="toast" class="fixed bottom-5 right-5 z-50 transform translate-y-20 opacity-0 transition-all duration-300 pointer-events-none">
+        <div class="bg-[#0d2149] border border-slate-700 text-white text-xs font-medium px-4 py-3 rounded-xl shadow-2xl flex items-center space-x-2">
+            <i data-lucide="check-circle" class="w-4 h-4 text-emerald-400"></i>
+            <span id="toastMessage">Action completed successfully</span>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="/static/js/app.js"></script>
+    <script>
+        lucide.createIcons();
+
+        // Device View Switching
+        const btnDesktop = document.getElementById("btnViewDesktop");
+        const btnMobile = document.getElementById("btnViewMobile");
+        const container = document.getElementById("deviceContainer");
+
+        if (btnDesktop && btnMobile && container) {
+            btnDesktop.addEventListener("click", () => {
+                container.classList.remove("mobile-device-frame");
+                btnDesktop.classList.add("bg-blue-600", "text-white");
+                btnDesktop.classList.remove("text-slate-300");
+                btnMobile.classList.remove("bg-blue-600", "text-white");
+                btnMobile.classList.add("text-slate-300");
+            });
+
+            btnMobile.addEventListener("click", () => {
+                container.classList.add("mobile-device-frame");
+                btnMobile.classList.add("bg-blue-600", "text-white");
+                btnMobile.classList.remove("text-slate-300");
+                btnDesktop.classList.remove("bg-blue-600", "text-white");
+                btnDesktop.classList.add("text-slate-300");
+            });
+        }
+
+        // Phone connect modal
+        const btnShowModal = document.getElementById("btnShowMobileURL");
+        if (btnShowModal) {
+            btnShowModal.addEventListener("click", () => {
+                document.getElementById("mobileConnectURL").textContent = window.location.href;
+                document.getElementById("phoneConnectModal").classList.remove("hidden");
+                lucide.createIcons();
+            });
+        }
+
+        // Mobile sidebar drawer
+        const openDrawer = document.getElementById("btnOpenMobileSidebar");
+        const closeDrawer = document.getElementById("btnCloseMobileSidebar");
+        const sidebar = document.getElementById("appSidebar");
+        const backdrop = document.getElementById("mobileBackdrop");
+
+        if (openDrawer && sidebar && backdrop) {
+            openDrawer.addEventListener("click", () => {
+                sidebar.classList.remove("-translate-x-full");
+                backdrop.classList.remove("hidden");
+            });
+            const closeAll = () => {
+                sidebar.classList.add("-translate-x-full");
+                backdrop.classList.add("hidden");
+            };
+            if (closeDrawer) closeDrawer.addEventListener("click", closeAll);
+            backdrop.addEventListener("click", closeAll);
+        }
+    </script>
+</body>
+</html>
