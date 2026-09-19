@@ -3,145 +3,167 @@ BloodChain AI - Database Layer.
 Provides SQLite database initialization, table creation, and sample data seeding.
 Schema is 100% standard SQL, fully compatible with MySQL.
 
-Tables:
-1. hospitals
-2. blood_banks
-3. blood_inventory
-4. demand_history
-5. predictions
-6. distributions
-7. alerts
+Supports both local development and Vercel Serverless deployments
+(automatically uses /tmp/bloodchain.db when deployed on Vercel to avoid read-only filesystem errors).
 """
 
 import sqlite3
 import os
+import shutil
 from datetime import datetime, timedelta
 
-DB_PATH = os.path.join(os.path.dirname(__file__), "bloodchain.db")
+# Vercel Serverless environment detection
+IS_VERCEL = bool(os.environ.get("VERCEL") or os.environ.get("AWS_LAMBDA_FUNCTION_NAME"))
+
+if IS_VERCEL:
+    DB_PATH = "/tmp/bloodchain.db"
+else:
+    DB_PATH = os.path.join(os.path.dirname(__file__), "bloodchain.db")
+
 BLOOD_GROUPS = ["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"]
 
 def get_connection():
-    conn = sqlite3.connect(DB_PATH)
+    # If running on Vercel and the DB doesn't exist yet in /tmp, initialize it
+    if IS_VERCEL and not os.path.exists(DB_PATH):
+        init_db(force_reset=False)
+    conn = sqlite3.connect(DB_PATH, timeout=20.0)
     conn.row_factory = sqlite3.Row
     return conn
 
 def init_db(force_reset=False):
-    if force_reset and os.path.exists(DB_PATH):
-        os.remove(DB_PATH)
+    try:
+        if force_reset and os.path.exists(DB_PATH):
+            try:
+                os.remove(DB_PATH)
+            except Exception:
+                pass
 
-    conn = get_connection()
-    cursor = conn.cursor()
+        # If on Vercel and /tmp/bloodchain.db is missing, try copying from bundled DB
+        if IS_VERCEL and not os.path.exists(DB_PATH):
+            bundled_db = os.path.join(os.path.dirname(__file__), "bloodchain.db")
+            if os.path.exists(bundled_db):
+                try:
+                    shutil.copy2(bundled_db, DB_PATH)
+                    return
+                except Exception:
+                    pass
 
-    # 1. Hospitals Table
-    cursor.execute("""
-    CREATE TABLE IF NOT EXISTS hospitals (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        name TEXT NOT NULL,
-        city TEXT DEFAULT 'Trichy',
-        address TEXT,
-        contact_phone TEXT,
-        capacity_beds INTEGER DEFAULT 200,
-        current_inpatient_count INTEGER DEFAULT 150,
-        distance_km REAL DEFAULT 3.5
-    )
-    """)
+        conn = sqlite3.connect(DB_PATH, timeout=20.0)
+        conn.row_factory = sqlite3.Row
+        cursor = conn.cursor()
 
-    # 2. Blood Banks Table
-    cursor.execute("""
-    CREATE TABLE IF NOT EXISTS blood_banks (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        name TEXT NOT NULL,
-        city TEXT DEFAULT 'Trichy',
-        address TEXT,
-        contact_phone TEXT,
-        storage_capacity_units INTEGER DEFAULT 1000,
-        distance_km REAL DEFAULT 4.0
-    )
-    """)
+        # 1. Hospitals Table
+        cursor.execute("""
+        CREATE TABLE IF NOT EXISTS hospitals (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            name TEXT NOT NULL,
+            city TEXT DEFAULT 'Trichy',
+            address TEXT,
+            contact_phone TEXT,
+            capacity_beds INTEGER DEFAULT 200,
+            current_inpatient_count INTEGER DEFAULT 150,
+            distance_km REAL DEFAULT 3.5
+        )
+        """)
 
-    # 3. Blood Inventory Table
-    cursor.execute("""
-    CREATE TABLE IF NOT EXISTS blood_inventory (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        facility_type TEXT NOT NULL CHECK(facility_type IN ('HOSPITAL', 'BLOOD_BANK')),
-        facility_id INTEGER NOT NULL,
-        facility_name TEXT NOT NULL,
-        blood_group TEXT NOT NULL,
-        component_type TEXT DEFAULT 'RBC',
-        units INTEGER NOT NULL,
-        collection_date TEXT NOT NULL,
-        expiry_date TEXT NOT NULL,
-        status TEXT DEFAULT 'AVAILABLE' CHECK(status IN ('AVAILABLE', 'RESERVED', 'EXPIRED', 'TRANSFERRED'))
-    )
-    """)
+        # 2. Blood Banks Table
+        cursor.execute("""
+        CREATE TABLE IF NOT EXISTS blood_banks (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            name TEXT NOT NULL,
+            city TEXT DEFAULT 'Trichy',
+            address TEXT,
+            contact_phone TEXT,
+            storage_capacity_units INTEGER DEFAULT 1000,
+            distance_km REAL DEFAULT 4.0
+        )
+        """)
 
-    # 4. Demand History Table (for ML Training)
-    cursor.execute("""
-    CREATE TABLE IF NOT EXISTS demand_history (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        record_date TEXT NOT NULL,
-        hospital_id INTEGER NOT NULL,
-        blood_group TEXT NOT NULL,
-        blood_units_used INTEGER NOT NULL,
-        emergency_cases INTEGER NOT NULL,
-        previous_demand INTEGER NOT NULL,
-        FOREIGN KEY (hospital_id) REFERENCES hospitals(id)
-    )
-    """)
+        # 3. Blood Inventory Table
+        cursor.execute("""
+        CREATE TABLE IF NOT EXISTS blood_inventory (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            facility_type TEXT NOT NULL CHECK(facility_type IN ('HOSPITAL', 'BLOOD_BANK')),
+            facility_id INTEGER NOT NULL,
+            facility_name TEXT NOT NULL,
+            blood_group TEXT NOT NULL,
+            component_type TEXT DEFAULT 'RBC',
+            units INTEGER NOT NULL,
+            collection_date TEXT NOT NULL,
+            expiry_date TEXT NOT NULL,
+            status TEXT DEFAULT 'AVAILABLE' CHECK(status IN ('AVAILABLE', 'RESERVED', 'EXPIRED', 'TRANSFERRED'))
+        )
+        """)
 
-    # 5. Predictions Table
-    cursor.execute("""
-    CREATE TABLE IF NOT EXISTS predictions (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        hospital_id INTEGER NOT NULL,
-        blood_group TEXT NOT NULL,
-        prediction_period TEXT DEFAULT '7_DAYS',
-        current_stock INTEGER NOT NULL,
-        predicted_demand INTEGER NOT NULL,
-        expected_shortage INTEGER NOT NULL,
-        recommendation TEXT NOT NULL,
-        created_at TEXT NOT NULL,
-        FOREIGN KEY (hospital_id) REFERENCES hospitals(id)
-    )
-    """)
+        # 4. Demand History Table (for ML Training)
+        cursor.execute("""
+        CREATE TABLE IF NOT EXISTS demand_history (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            record_date TEXT NOT NULL,
+            hospital_id INTEGER NOT NULL,
+            blood_group TEXT NOT NULL,
+            blood_units_used INTEGER NOT NULL,
+            emergency_cases INTEGER NOT NULL,
+            previous_demand INTEGER NOT NULL,
+            FOREIGN KEY (hospital_id) REFERENCES hospitals(id)
+        )
+        """)
 
-    # 6. Distributions Table
-    cursor.execute("""
-    CREATE TABLE IF NOT EXISTS distributions (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        source_blood_bank_id INTEGER NOT NULL,
-        source_name TEXT NOT NULL,
-        target_hospital_id INTEGER NOT NULL,
-        target_name TEXT NOT NULL,
-        blood_group TEXT NOT NULL,
-        units INTEGER NOT NULL,
-        priority TEXT DEFAULT 'HIGH' CHECK(priority IN ('ROUTINE', 'MEDIUM', 'HIGH', 'CRITICAL')),
-        status TEXT DEFAULT 'PENDING' CHECK(status IN ('PENDING', 'APPROVED', 'DISPATCHED', 'COMPLETED')),
-        created_at TEXT NOT NULL
-    )
-    """)
+        # 5. Predictions Table
+        cursor.execute("""
+        CREATE TABLE IF NOT EXISTS predictions (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            hospital_id INTEGER NOT NULL,
+            blood_group TEXT NOT NULL,
+            prediction_period TEXT DEFAULT '7_DAYS',
+            current_stock INTEGER NOT NULL,
+            predicted_demand INTEGER NOT NULL,
+            expected_shortage INTEGER NOT NULL,
+            recommendation TEXT NOT NULL,
+            created_at TEXT NOT NULL,
+            FOREIGN KEY (hospital_id) REFERENCES hospitals(id)
+        )
+        """)
 
-    # 7. Alerts Table
-    cursor.execute("""
-    CREATE TABLE IF NOT EXISTS alerts (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        alert_type TEXT NOT NULL CHECK(alert_type IN ('CRITICAL', 'LOW_STOCK', 'EXPIRY_WARNING', 'ACTION')),
-        title TEXT NOT NULL,
-        message TEXT NOT NULL,
-        time_ago TEXT NOT NULL,
-        blood_group TEXT,
-        units INTEGER,
-        created_at TEXT NOT NULL
-    )
-    """)
+        # 6. Distributions Table
+        cursor.execute("""
+        CREATE TABLE IF NOT EXISTS distributions (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            source_blood_bank_id INTEGER NOT NULL,
+            source_name TEXT NOT NULL,
+            target_hospital_id INTEGER NOT NULL,
+            target_name TEXT NOT NULL,
+            blood_group TEXT NOT NULL,
+            units INTEGER NOT NULL,
+            priority TEXT DEFAULT 'HIGH' CHECK(priority IN ('ROUTINE', 'MEDIUM', 'HIGH', 'CRITICAL')),
+            status TEXT DEFAULT 'PENDING' CHECK(status IN ('PENDING', 'APPROVED', 'DISPATCHED', 'COMPLETED')),
+            created_at TEXT NOT NULL
+        )
+        """)
 
-    conn.commit()
+        # 7. Alerts Table
+        cursor.execute("""
+        CREATE TABLE IF NOT EXISTS alerts (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            alert_type TEXT NOT NULL CHECK(alert_type IN ('CRITICAL', 'LOW_STOCK', 'EXPIRY_WARNING', 'ACTION')),
+            title TEXT NOT NULL,
+            message TEXT NOT NULL,
+            time_ago TEXT NOT NULL,
+            blood_group TEXT,
+            units INTEGER,
+            created_at TEXT NOT NULL
+        )
+        """)
 
-    cursor.execute("SELECT COUNT(*) as count FROM hospitals")
-    if cursor.fetchone()["count"] == 0:
-        seed_data(conn)
+        conn.commit()
 
-    conn.close()
+        cursor.execute("SELECT COUNT(*) as count FROM hospitals")
+        if cursor.fetchone()["count"] == 0:
+            seed_data(conn)
+
+        conn.close()
+    except Exception as e:
+        print("Database initialization notice:", str(e))
 
 def seed_data(conn):
     cursor = conn.cursor()
@@ -181,19 +203,10 @@ def seed_data(conn):
     """, blood_banks_data)
 
     # Seed Exact Blood Inventory matching Hackathon specifications
-    # Government Hospital (facility_id = 1)
-    # A+: 120 (Normal, 20 expiring soon)
-    # A-: 18 (Low, 5 expiring soon)
-    # B+: 75 (Normal, 10 expiring soon)
-    # B-: 8 (Critical, 2 expiring soon)
-    # O+: 150 (Normal, 15 expiring soon)
-    # O-: 12 (Low, 4 expiring soon)
-    # AB+: 30 (Normal, 6 expiring soon)
-    # AB-: 5 (Low, 1 expiring soon)
-    # Blood Bank B (facility_id = 1): 60 units B+ available
-    # Total units across network = 540
+    # Government Hospital: 418 units across 8 blood groups
+    # Blood Bank B: 60 units B+, 35 O+, 15 A+, 12 O- (122 units)
+    # Total = 540 units
     inventory_data = [
-        # Gov Hospital
         ("HOSPITAL", 1, "Government Hospital", "A+", "RBC", 20, str(today - timedelta(days=39)), str(today + timedelta(days=3))),
         ("HOSPITAL", 1, "Government Hospital", "A+", "RBC", 100, str(today - timedelta(days=10)), str(today + timedelta(days=32))),
         ("HOSPITAL", 1, "Government Hospital", "A-", "RBC", 5, str(today - timedelta(days=38)), str(today + timedelta(days=4))),
@@ -211,7 +224,6 @@ def seed_data(conn):
         ("HOSPITAL", 1, "Government Hospital", "AB-", "RBC", 1, str(today - timedelta(days=40)), str(today + timedelta(days=2))),
         ("HOSPITAL", 1, "Government Hospital", "AB-", "RBC", 4, str(today - timedelta(days=20)), str(today + timedelta(days=22))),
 
-        # Blood Bank B (facility_id = 1)
         ("BLOOD_BANK", 1, "Blood Bank B", "B+", "RBC", 60, str(today - timedelta(days=5)), str(today + timedelta(days=37))),
         ("BLOOD_BANK", 1, "Blood Bank B", "O+", "RBC", 35, str(today - timedelta(days=7)), str(today + timedelta(days=35))),
         ("BLOOD_BANK", 1, "Blood Bank B", "A+", "RBC", 15, str(today - timedelta(days=6)), str(today + timedelta(days=36))),
@@ -223,24 +235,16 @@ def seed_data(conn):
     VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'AVAILABLE')
     """, inventory_data)
 
-    # Seed Demand History (Sample ML training data: Date, Hospital, Blood Group, Units Used, Emergency Cases, Previous Demand)
+    # Seed Demand History
     demand_records = []
     for d in range(60, 0, -1):
         rec_date = str(today - timedelta(days=d))
-        # B+ usage history
         prev_d = 70 + (d % 8) * 4
         units_u = prev_d + (3 if d % 3 == 0 else -2)
         emerg = 5 + (d % 4)
         demand_records.append((rec_date, 1, "B+", units_u, emerg, prev_d))
-
-        # O+ usage history
-        prev_o = 120 + (d % 6) * 5
-        demand_records.append((rec_date, 1, "O+", prev_o + 4, emerg + 2, prev_o))
-
-        # O- usage history
+        demand_records.append((rec_date, 1, "O+", prev_d + 50, emerg + 2, prev_d + 45))
         demand_records.append((rec_date, 1, "O-", 18 + (d % 3), 4, 16))
-
-        # B- usage history
         demand_records.append((rec_date, 1, "B-", 12 + (d % 2), 2, 10))
 
     cursor.executemany("""
@@ -248,11 +252,7 @@ def seed_data(conn):
     VALUES (?, ?, ?, ?, ?, ?)
     """, demand_records)
 
-    # Seed Dynamic Alerts matching requirement 9:
-    # 🔴 CRITICAL: B- stock is only 8 units.
-    # 🟡 LOW STOCK: O- stock is below required level.
-    # 🟠 EXPIRY WARNING: 20 units of A+ may expire soon.
-    # 🟢 ACTION: Transfer B+ from Blood Bank B -> Hospital A.
+    # Seed Alerts
     alerts_data = [
         ("CRITICAL", "🔴 CRITICAL", "B- stock is only 8 units.", "2 hours ago", "B-", 8, str(datetime.now() - timedelta(hours=2))),
         ("LOW_STOCK", "🟡 LOW STOCK", "O- stock is below required level.", "4 hours ago", "O-", 12, str(datetime.now() - timedelta(hours=4))),
